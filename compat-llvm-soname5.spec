@@ -6,7 +6,7 @@
 #
 Name     : compat-llvm-soname5
 Version  : 5.0.1
-Release  : 1
+Release  : 4
 URL      : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
 Source0  : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
 Source99 : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz.sig
@@ -16,6 +16,7 @@ License  : BSD-3-Clause MIT NCSA
 Requires: compat-llvm-soname5-bin
 Requires: compat-llvm-soname5-lib
 Requires: compat-llvm-soname5-data
+BuildRequires : binutils-dev
 BuildRequires : cmake
 BuildRequires : go
 BuildRequires : pbr
@@ -73,15 +74,15 @@ export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C
-export SOURCE_DATE_EPOCH=1521073443
+export SOURCE_DATE_EPOCH=1521747552
 mkdir clr-build
 pushd clr-build
-cmake .. -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_SHARED_LIBS:BOOL=ON -DLIB_INSTALL_DIR:PATH=/usr/lib64 -DCMAKE_AR=/usr/bin/gcc-ar -DLIB_SUFFIX=64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RANLIB=/usr/bin/gcc-ranlib
+cmake .. -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_SHARED_LIBS:BOOL=ON -DLIB_INSTALL_DIR:PATH=/usr/lib64 -DCMAKE_AR=/usr/bin/gcc-ar -DLIB_SUFFIX=64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RANLIB=/usr/bin/gcc-ranlib -DLLVM_ENABLE_ZLIB:BOOL=ON  -DLLVM_LIBDIR_SUFFIX=64   -DLLVM_BINUTILS_INCDIR=/usr/include -DLLVM_TARGETS_TO_BUILD="X86;BPF;AMDGPU;NVPTX" -DLLVM_INSTALL_UTILS=ON -DLLVM_ENABLE_CXX1Y=ON -DC_INCLUDE_DIRS="/usr/include/c++:/usr/include/c++/x86_64-generic-linux:/usr/include"
 make  %{?_smp_mflags}
 popd
 
 %install
-export SOURCE_DATE_EPOCH=1521073443
+export SOURCE_DATE_EPOCH=1521747552
 rm -rf %{buildroot}
 pushd clr-build
 %make_install
@@ -92,9 +93,13 @@ popd
 
 %files bin
 %defattr(-,root,root,-)
+%exclude /usr/bin/FileCheck
 %exclude /usr/bin/bugpoint
+%exclude /usr/bin/count
 %exclude /usr/bin/llc
 %exclude /usr/bin/lli
+%exclude /usr/bin/lli-child-target
+%exclude /usr/bin/llvm-PerfectShuffle
 %exclude /usr/bin/llvm-ar
 %exclude /usr/bin/llvm-as
 %exclude /usr/bin/llvm-bcanalyzer
@@ -136,11 +141,13 @@ popd
 %exclude /usr/bin/llvm-symbolizer
 %exclude /usr/bin/llvm-tblgen
 %exclude /usr/bin/llvm-xray
+%exclude /usr/bin/not
 %exclude /usr/bin/obj2yaml
 %exclude /usr/bin/opt
 %exclude /usr/bin/sancov
 %exclude /usr/bin/sanstats
 %exclude /usr/bin/verify-uselistorder
+%exclude /usr/bin/yaml-bench
 %exclude /usr/bin/yaml2obj
 
 %files data
@@ -1279,424 +1286,254 @@ popd
 %exclude /usr/include/llvm/XRay/Trace.h
 %exclude /usr/include/llvm/XRay/XRayRecord.h
 %exclude /usr/include/llvm/XRay/YAMLXRayRecord.h
-%exclude /usr/lib/BugpointPasses.so
-%exclude /usr/lib/LLVMHello.so
-%exclude /usr/lib/cmake/llvm/AddLLVM.cmake
-%exclude /usr/lib/cmake/llvm/AddLLVMDefinitions.cmake
-%exclude /usr/lib/cmake/llvm/AddOCaml.cmake
-%exclude /usr/lib/cmake/llvm/AddSphinxTarget.cmake
-%exclude /usr/lib/cmake/llvm/CheckAtomic.cmake
-%exclude /usr/lib/cmake/llvm/CheckCompilerVersion.cmake
-%exclude /usr/lib/cmake/llvm/CheckLinkerFlag.cmake
-%exclude /usr/lib/cmake/llvm/ChooseMSVCCRT.cmake
-%exclude /usr/lib/cmake/llvm/CrossCompile.cmake
-%exclude /usr/lib/cmake/llvm/DetermineGCCCompatible.cmake
-%exclude /usr/lib/cmake/llvm/FindOCaml.cmake
-%exclude /usr/lib/cmake/llvm/FindSphinx.cmake
-%exclude /usr/lib/cmake/llvm/GenerateVersionFromCVS.cmake
-%exclude /usr/lib/cmake/llvm/GetSVN.cmake
-%exclude /usr/lib/cmake/llvm/HandleLLVMOptions.cmake
-%exclude /usr/lib/cmake/llvm/HandleLLVMStdlib.cmake
-%exclude /usr/lib/cmake/llvm/LLVM-Config.cmake
-%exclude /usr/lib/cmake/llvm/LLVMConfig.cmake
-%exclude /usr/lib/cmake/llvm/LLVMConfigVersion.cmake
-%exclude /usr/lib/cmake/llvm/LLVMExports-relwithdebinfo.cmake
-%exclude /usr/lib/cmake/llvm/LLVMExports.cmake
-%exclude /usr/lib/cmake/llvm/LLVMExternalProjectUtils.cmake
-%exclude /usr/lib/cmake/llvm/LLVMInstallSymlink.cmake
-%exclude /usr/lib/cmake/llvm/LLVMProcessSources.cmake
-%exclude /usr/lib/cmake/llvm/TableGen.cmake
-%exclude /usr/lib/cmake/llvm/VersionFromVCS.cmake
-%exclude /usr/lib/libLLVMAArch64AsmParser.so
-%exclude /usr/lib/libLLVMAArch64AsmPrinter.so
-%exclude /usr/lib/libLLVMAArch64CodeGen.so
-%exclude /usr/lib/libLLVMAArch64Desc.so
-%exclude /usr/lib/libLLVMAArch64Disassembler.so
-%exclude /usr/lib/libLLVMAArch64Info.so
-%exclude /usr/lib/libLLVMAArch64Utils.so
-%exclude /usr/lib/libLLVMAMDGPUAsmParser.so
-%exclude /usr/lib/libLLVMAMDGPUAsmPrinter.so
-%exclude /usr/lib/libLLVMAMDGPUCodeGen.so
-%exclude /usr/lib/libLLVMAMDGPUDesc.so
-%exclude /usr/lib/libLLVMAMDGPUDisassembler.so
-%exclude /usr/lib/libLLVMAMDGPUInfo.so
-%exclude /usr/lib/libLLVMAMDGPUUtils.so
-%exclude /usr/lib/libLLVMARMAsmParser.so
-%exclude /usr/lib/libLLVMARMAsmPrinter.so
-%exclude /usr/lib/libLLVMARMCodeGen.so
-%exclude /usr/lib/libLLVMARMDesc.so
-%exclude /usr/lib/libLLVMARMDisassembler.so
-%exclude /usr/lib/libLLVMARMInfo.so
-%exclude /usr/lib/libLLVMAnalysis.so
-%exclude /usr/lib/libLLVMAsmParser.so
-%exclude /usr/lib/libLLVMAsmPrinter.so
-%exclude /usr/lib/libLLVMBPFAsmPrinter.so
-%exclude /usr/lib/libLLVMBPFCodeGen.so
-%exclude /usr/lib/libLLVMBPFDesc.so
-%exclude /usr/lib/libLLVMBPFDisassembler.so
-%exclude /usr/lib/libLLVMBPFInfo.so
-%exclude /usr/lib/libLLVMBinaryFormat.so
-%exclude /usr/lib/libLLVMBitReader.so
-%exclude /usr/lib/libLLVMBitWriter.so
-%exclude /usr/lib/libLLVMCodeGen.so
-%exclude /usr/lib/libLLVMCore.so
-%exclude /usr/lib/libLLVMCoroutines.so
-%exclude /usr/lib/libLLVMCoverage.so
-%exclude /usr/lib/libLLVMDebugInfoCodeView.so
-%exclude /usr/lib/libLLVMDebugInfoDWARF.so
-%exclude /usr/lib/libLLVMDebugInfoMSF.so
-%exclude /usr/lib/libLLVMDebugInfoPDB.so
-%exclude /usr/lib/libLLVMDemangle.so
-%exclude /usr/lib/libLLVMDlltoolDriver.so
-%exclude /usr/lib/libLLVMExecutionEngine.so
-%exclude /usr/lib/libLLVMGlobalISel.so
-%exclude /usr/lib/libLLVMHexagonAsmParser.so
-%exclude /usr/lib/libLLVMHexagonCodeGen.so
-%exclude /usr/lib/libLLVMHexagonDesc.so
-%exclude /usr/lib/libLLVMHexagonDisassembler.so
-%exclude /usr/lib/libLLVMHexagonInfo.so
-%exclude /usr/lib/libLLVMIRReader.so
-%exclude /usr/lib/libLLVMInstCombine.so
-%exclude /usr/lib/libLLVMInstrumentation.so
-%exclude /usr/lib/libLLVMInterpreter.so
-%exclude /usr/lib/libLLVMLTO.so
-%exclude /usr/lib/libLLVMLanaiAsmParser.so
-%exclude /usr/lib/libLLVMLanaiAsmPrinter.so
-%exclude /usr/lib/libLLVMLanaiCodeGen.so
-%exclude /usr/lib/libLLVMLanaiDesc.so
-%exclude /usr/lib/libLLVMLanaiDisassembler.so
-%exclude /usr/lib/libLLVMLanaiInfo.so
-%exclude /usr/lib/libLLVMLibDriver.so
-%exclude /usr/lib/libLLVMLineEditor.so
-%exclude /usr/lib/libLLVMLinker.so
-%exclude /usr/lib/libLLVMMC.so
-%exclude /usr/lib/libLLVMMCDisassembler.so
-%exclude /usr/lib/libLLVMMCJIT.so
-%exclude /usr/lib/libLLVMMCParser.so
-%exclude /usr/lib/libLLVMMIRParser.so
-%exclude /usr/lib/libLLVMMSP430AsmPrinter.so
-%exclude /usr/lib/libLLVMMSP430CodeGen.so
-%exclude /usr/lib/libLLVMMSP430Desc.so
-%exclude /usr/lib/libLLVMMSP430Info.so
-%exclude /usr/lib/libLLVMMipsAsmParser.so
-%exclude /usr/lib/libLLVMMipsAsmPrinter.so
-%exclude /usr/lib/libLLVMMipsCodeGen.so
-%exclude /usr/lib/libLLVMMipsDesc.so
-%exclude /usr/lib/libLLVMMipsDisassembler.so
-%exclude /usr/lib/libLLVMMipsInfo.so
-%exclude /usr/lib/libLLVMNVPTXAsmPrinter.so
-%exclude /usr/lib/libLLVMNVPTXCodeGen.so
-%exclude /usr/lib/libLLVMNVPTXDesc.so
-%exclude /usr/lib/libLLVMNVPTXInfo.so
-%exclude /usr/lib/libLLVMObjCARCOpts.so
-%exclude /usr/lib/libLLVMObject.so
-%exclude /usr/lib/libLLVMObjectYAML.so
-%exclude /usr/lib/libLLVMOption.so
-%exclude /usr/lib/libLLVMOrcJIT.so
-%exclude /usr/lib/libLLVMPasses.so
-%exclude /usr/lib/libLLVMPowerPCAsmParser.so
-%exclude /usr/lib/libLLVMPowerPCAsmPrinter.so
-%exclude /usr/lib/libLLVMPowerPCCodeGen.so
-%exclude /usr/lib/libLLVMPowerPCDesc.so
-%exclude /usr/lib/libLLVMPowerPCDisassembler.so
-%exclude /usr/lib/libLLVMPowerPCInfo.so
-%exclude /usr/lib/libLLVMProfileData.so
-%exclude /usr/lib/libLLVMRuntimeDyld.so
-%exclude /usr/lib/libLLVMScalarOpts.so
-%exclude /usr/lib/libLLVMSelectionDAG.so
-%exclude /usr/lib/libLLVMSparcAsmParser.so
-%exclude /usr/lib/libLLVMSparcAsmPrinter.so
-%exclude /usr/lib/libLLVMSparcCodeGen.so
-%exclude /usr/lib/libLLVMSparcDesc.so
-%exclude /usr/lib/libLLVMSparcDisassembler.so
-%exclude /usr/lib/libLLVMSparcInfo.so
-%exclude /usr/lib/libLLVMSupport.so
-%exclude /usr/lib/libLLVMSymbolize.so
-%exclude /usr/lib/libLLVMSystemZAsmParser.so
-%exclude /usr/lib/libLLVMSystemZAsmPrinter.so
-%exclude /usr/lib/libLLVMSystemZCodeGen.so
-%exclude /usr/lib/libLLVMSystemZDesc.so
-%exclude /usr/lib/libLLVMSystemZDisassembler.so
-%exclude /usr/lib/libLLVMSystemZInfo.so
-%exclude /usr/lib/libLLVMTableGen.so
-%exclude /usr/lib/libLLVMTarget.so
-%exclude /usr/lib/libLLVMTransformUtils.so
-%exclude /usr/lib/libLLVMVectorize.so
-%exclude /usr/lib/libLLVMX86AsmParser.so
-%exclude /usr/lib/libLLVMX86AsmPrinter.so
-%exclude /usr/lib/libLLVMX86CodeGen.so
-%exclude /usr/lib/libLLVMX86Desc.so
-%exclude /usr/lib/libLLVMX86Disassembler.so
-%exclude /usr/lib/libLLVMX86Info.so
-%exclude /usr/lib/libLLVMX86Utils.so
-%exclude /usr/lib/libLLVMXCoreAsmPrinter.so
-%exclude /usr/lib/libLLVMXCoreCodeGen.so
-%exclude /usr/lib/libLLVMXCoreDesc.so
-%exclude /usr/lib/libLLVMXCoreDisassembler.so
-%exclude /usr/lib/libLLVMXCoreInfo.so
-%exclude /usr/lib/libLLVMXRay.so
-%exclude /usr/lib/libLLVMipo.so
-%exclude /usr/lib/libLTO.so
+%exclude /usr/lib64/BugpointPasses.so
+%exclude /usr/lib64/LLVMHello.so
+%exclude /usr/lib64/LLVMgold.so
+%exclude /usr/lib64/cmake/llvm/AddLLVM.cmake
+%exclude /usr/lib64/cmake/llvm/AddLLVMDefinitions.cmake
+%exclude /usr/lib64/cmake/llvm/AddOCaml.cmake
+%exclude /usr/lib64/cmake/llvm/AddSphinxTarget.cmake
+%exclude /usr/lib64/cmake/llvm/CheckAtomic.cmake
+%exclude /usr/lib64/cmake/llvm/CheckCompilerVersion.cmake
+%exclude /usr/lib64/cmake/llvm/CheckLinkerFlag.cmake
+%exclude /usr/lib64/cmake/llvm/ChooseMSVCCRT.cmake
+%exclude /usr/lib64/cmake/llvm/CrossCompile.cmake
+%exclude /usr/lib64/cmake/llvm/DetermineGCCCompatible.cmake
+%exclude /usr/lib64/cmake/llvm/FindOCaml.cmake
+%exclude /usr/lib64/cmake/llvm/FindSphinx.cmake
+%exclude /usr/lib64/cmake/llvm/GenerateVersionFromCVS.cmake
+%exclude /usr/lib64/cmake/llvm/GetSVN.cmake
+%exclude /usr/lib64/cmake/llvm/HandleLLVMOptions.cmake
+%exclude /usr/lib64/cmake/llvm/HandleLLVMStdlib.cmake
+%exclude /usr/lib64/cmake/llvm/LLVM-Config.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMConfig.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMConfigVersion.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMExports-relwithdebinfo.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMExports.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMExternalProjectUtils.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMInstallSymlink.cmake
+%exclude /usr/lib64/cmake/llvm/LLVMProcessSources.cmake
+%exclude /usr/lib64/cmake/llvm/TableGen.cmake
+%exclude /usr/lib64/cmake/llvm/VersionFromVCS.cmake
+%exclude /usr/lib64/libLLVMAMDGPUAsmParser.so
+%exclude /usr/lib64/libLLVMAMDGPUAsmPrinter.so
+%exclude /usr/lib64/libLLVMAMDGPUCodeGen.so
+%exclude /usr/lib64/libLLVMAMDGPUDesc.so
+%exclude /usr/lib64/libLLVMAMDGPUDisassembler.so
+%exclude /usr/lib64/libLLVMAMDGPUInfo.so
+%exclude /usr/lib64/libLLVMAMDGPUUtils.so
+%exclude /usr/lib64/libLLVMAnalysis.so
+%exclude /usr/lib64/libLLVMAsmParser.so
+%exclude /usr/lib64/libLLVMAsmPrinter.so
+%exclude /usr/lib64/libLLVMBPFAsmPrinter.so
+%exclude /usr/lib64/libLLVMBPFCodeGen.so
+%exclude /usr/lib64/libLLVMBPFDesc.so
+%exclude /usr/lib64/libLLVMBPFDisassembler.so
+%exclude /usr/lib64/libLLVMBPFInfo.so
+%exclude /usr/lib64/libLLVMBinaryFormat.so
+%exclude /usr/lib64/libLLVMBitReader.so
+%exclude /usr/lib64/libLLVMBitWriter.so
+%exclude /usr/lib64/libLLVMCodeGen.so
+%exclude /usr/lib64/libLLVMCore.so
+%exclude /usr/lib64/libLLVMCoroutines.so
+%exclude /usr/lib64/libLLVMCoverage.so
+%exclude /usr/lib64/libLLVMDebugInfoCodeView.so
+%exclude /usr/lib64/libLLVMDebugInfoDWARF.so
+%exclude /usr/lib64/libLLVMDebugInfoMSF.so
+%exclude /usr/lib64/libLLVMDebugInfoPDB.so
+%exclude /usr/lib64/libLLVMDemangle.so
+%exclude /usr/lib64/libLLVMDlltoolDriver.so
+%exclude /usr/lib64/libLLVMExecutionEngine.so
+%exclude /usr/lib64/libLLVMGlobalISel.so
+%exclude /usr/lib64/libLLVMIRReader.so
+%exclude /usr/lib64/libLLVMInstCombine.so
+%exclude /usr/lib64/libLLVMInstrumentation.so
+%exclude /usr/lib64/libLLVMInterpreter.so
+%exclude /usr/lib64/libLLVMLTO.so
+%exclude /usr/lib64/libLLVMLibDriver.so
+%exclude /usr/lib64/libLLVMLineEditor.so
+%exclude /usr/lib64/libLLVMLinker.so
+%exclude /usr/lib64/libLLVMMC.so
+%exclude /usr/lib64/libLLVMMCDisassembler.so
+%exclude /usr/lib64/libLLVMMCJIT.so
+%exclude /usr/lib64/libLLVMMCParser.so
+%exclude /usr/lib64/libLLVMMIRParser.so
+%exclude /usr/lib64/libLLVMNVPTXAsmPrinter.so
+%exclude /usr/lib64/libLLVMNVPTXCodeGen.so
+%exclude /usr/lib64/libLLVMNVPTXDesc.so
+%exclude /usr/lib64/libLLVMNVPTXInfo.so
+%exclude /usr/lib64/libLLVMObjCARCOpts.so
+%exclude /usr/lib64/libLLVMObject.so
+%exclude /usr/lib64/libLLVMObjectYAML.so
+%exclude /usr/lib64/libLLVMOption.so
+%exclude /usr/lib64/libLLVMOrcJIT.so
+%exclude /usr/lib64/libLLVMPasses.so
+%exclude /usr/lib64/libLLVMProfileData.so
+%exclude /usr/lib64/libLLVMRuntimeDyld.so
+%exclude /usr/lib64/libLLVMScalarOpts.so
+%exclude /usr/lib64/libLLVMSelectionDAG.so
+%exclude /usr/lib64/libLLVMSupport.so
+%exclude /usr/lib64/libLLVMSymbolize.so
+%exclude /usr/lib64/libLLVMTableGen.so
+%exclude /usr/lib64/libLLVMTarget.so
+%exclude /usr/lib64/libLLVMTransformUtils.so
+%exclude /usr/lib64/libLLVMVectorize.so
+%exclude /usr/lib64/libLLVMX86AsmParser.so
+%exclude /usr/lib64/libLLVMX86AsmPrinter.so
+%exclude /usr/lib64/libLLVMX86CodeGen.so
+%exclude /usr/lib64/libLLVMX86Desc.so
+%exclude /usr/lib64/libLLVMX86Disassembler.so
+%exclude /usr/lib64/libLLVMX86Info.so
+%exclude /usr/lib64/libLLVMX86Utils.so
+%exclude /usr/lib64/libLLVMXRay.so
+%exclude /usr/lib64/libLLVMipo.so
+%exclude /usr/lib64/libLTO.so
 
 %files lib
 %defattr(-,root,root,-)
-/usr/lib/libLLVMAArch64AsmParser.so.5
-/usr/lib/libLLVMAArch64AsmParser.so.5.0.1
-/usr/lib/libLLVMAArch64AsmPrinter.so.5
-/usr/lib/libLLVMAArch64AsmPrinter.so.5.0.1
-/usr/lib/libLLVMAArch64CodeGen.so.5
-/usr/lib/libLLVMAArch64CodeGen.so.5.0.1
-/usr/lib/libLLVMAArch64Desc.so.5
-/usr/lib/libLLVMAArch64Desc.so.5.0.1
-/usr/lib/libLLVMAArch64Disassembler.so.5
-/usr/lib/libLLVMAArch64Disassembler.so.5.0.1
-/usr/lib/libLLVMAArch64Info.so.5
-/usr/lib/libLLVMAArch64Info.so.5.0.1
-/usr/lib/libLLVMAArch64Utils.so.5
-/usr/lib/libLLVMAArch64Utils.so.5.0.1
-/usr/lib/libLLVMAMDGPUAsmParser.so.5
-/usr/lib/libLLVMAMDGPUAsmParser.so.5.0.1
-/usr/lib/libLLVMAMDGPUAsmPrinter.so.5
-/usr/lib/libLLVMAMDGPUAsmPrinter.so.5.0.1
-/usr/lib/libLLVMAMDGPUCodeGen.so.5
-/usr/lib/libLLVMAMDGPUCodeGen.so.5.0.1
-/usr/lib/libLLVMAMDGPUDesc.so.5
-/usr/lib/libLLVMAMDGPUDesc.so.5.0.1
-/usr/lib/libLLVMAMDGPUDisassembler.so.5
-/usr/lib/libLLVMAMDGPUDisassembler.so.5.0.1
-/usr/lib/libLLVMAMDGPUInfo.so.5
-/usr/lib/libLLVMAMDGPUInfo.so.5.0.1
-/usr/lib/libLLVMAMDGPUUtils.so.5
-/usr/lib/libLLVMAMDGPUUtils.so.5.0.1
-/usr/lib/libLLVMARMAsmParser.so.5
-/usr/lib/libLLVMARMAsmParser.so.5.0.1
-/usr/lib/libLLVMARMAsmPrinter.so.5
-/usr/lib/libLLVMARMAsmPrinter.so.5.0.1
-/usr/lib/libLLVMARMCodeGen.so.5
-/usr/lib/libLLVMARMCodeGen.so.5.0.1
-/usr/lib/libLLVMARMDesc.so.5
-/usr/lib/libLLVMARMDesc.so.5.0.1
-/usr/lib/libLLVMARMDisassembler.so.5
-/usr/lib/libLLVMARMDisassembler.so.5.0.1
-/usr/lib/libLLVMARMInfo.so.5
-/usr/lib/libLLVMARMInfo.so.5.0.1
-/usr/lib/libLLVMAnalysis.so.5
-/usr/lib/libLLVMAnalysis.so.5.0.1
-/usr/lib/libLLVMAsmParser.so.5
-/usr/lib/libLLVMAsmParser.so.5.0.1
-/usr/lib/libLLVMAsmPrinter.so.5
-/usr/lib/libLLVMAsmPrinter.so.5.0.1
-/usr/lib/libLLVMBPFAsmPrinter.so.5
-/usr/lib/libLLVMBPFAsmPrinter.so.5.0.1
-/usr/lib/libLLVMBPFCodeGen.so.5
-/usr/lib/libLLVMBPFCodeGen.so.5.0.1
-/usr/lib/libLLVMBPFDesc.so.5
-/usr/lib/libLLVMBPFDesc.so.5.0.1
-/usr/lib/libLLVMBPFDisassembler.so.5
-/usr/lib/libLLVMBPFDisassembler.so.5.0.1
-/usr/lib/libLLVMBPFInfo.so.5
-/usr/lib/libLLVMBPFInfo.so.5.0.1
-/usr/lib/libLLVMBinaryFormat.so.5
-/usr/lib/libLLVMBinaryFormat.so.5.0.1
-/usr/lib/libLLVMBitReader.so.5
-/usr/lib/libLLVMBitReader.so.5.0.1
-/usr/lib/libLLVMBitWriter.so.5
-/usr/lib/libLLVMBitWriter.so.5.0.1
-/usr/lib/libLLVMCodeGen.so.5
-/usr/lib/libLLVMCodeGen.so.5.0.1
-/usr/lib/libLLVMCore.so.5
-/usr/lib/libLLVMCore.so.5.0.1
-/usr/lib/libLLVMCoroutines.so.5
-/usr/lib/libLLVMCoroutines.so.5.0.1
-/usr/lib/libLLVMCoverage.so.5
-/usr/lib/libLLVMCoverage.so.5.0.1
-/usr/lib/libLLVMDebugInfoCodeView.so.5
-/usr/lib/libLLVMDebugInfoCodeView.so.5.0.1
-/usr/lib/libLLVMDebugInfoDWARF.so.5
-/usr/lib/libLLVMDebugInfoDWARF.so.5.0.1
-/usr/lib/libLLVMDebugInfoMSF.so.5
-/usr/lib/libLLVMDebugInfoMSF.so.5.0.1
-/usr/lib/libLLVMDebugInfoPDB.so.5
-/usr/lib/libLLVMDebugInfoPDB.so.5.0.1
-/usr/lib/libLLVMDemangle.so.5
-/usr/lib/libLLVMDemangle.so.5.0.1
-/usr/lib/libLLVMDlltoolDriver.so.5
-/usr/lib/libLLVMDlltoolDriver.so.5.0.1
-/usr/lib/libLLVMExecutionEngine.so.5
-/usr/lib/libLLVMExecutionEngine.so.5.0.1
-/usr/lib/libLLVMGlobalISel.so.5
-/usr/lib/libLLVMGlobalISel.so.5.0.1
-/usr/lib/libLLVMHexagonAsmParser.so.5
-/usr/lib/libLLVMHexagonAsmParser.so.5.0.1
-/usr/lib/libLLVMHexagonCodeGen.so.5
-/usr/lib/libLLVMHexagonCodeGen.so.5.0.1
-/usr/lib/libLLVMHexagonDesc.so.5
-/usr/lib/libLLVMHexagonDesc.so.5.0.1
-/usr/lib/libLLVMHexagonDisassembler.so.5
-/usr/lib/libLLVMHexagonDisassembler.so.5.0.1
-/usr/lib/libLLVMHexagonInfo.so.5
-/usr/lib/libLLVMHexagonInfo.so.5.0.1
-/usr/lib/libLLVMIRReader.so.5
-/usr/lib/libLLVMIRReader.so.5.0.1
-/usr/lib/libLLVMInstCombine.so.5
-/usr/lib/libLLVMInstCombine.so.5.0.1
-/usr/lib/libLLVMInstrumentation.so.5
-/usr/lib/libLLVMInstrumentation.so.5.0.1
-/usr/lib/libLLVMInterpreter.so.5
-/usr/lib/libLLVMInterpreter.so.5.0.1
-/usr/lib/libLLVMLTO.so.5
-/usr/lib/libLLVMLTO.so.5.0.1
-/usr/lib/libLLVMLanaiAsmParser.so.5
-/usr/lib/libLLVMLanaiAsmParser.so.5.0.1
-/usr/lib/libLLVMLanaiAsmPrinter.so.5
-/usr/lib/libLLVMLanaiAsmPrinter.so.5.0.1
-/usr/lib/libLLVMLanaiCodeGen.so.5
-/usr/lib/libLLVMLanaiCodeGen.so.5.0.1
-/usr/lib/libLLVMLanaiDesc.so.5
-/usr/lib/libLLVMLanaiDesc.so.5.0.1
-/usr/lib/libLLVMLanaiDisassembler.so.5
-/usr/lib/libLLVMLanaiDisassembler.so.5.0.1
-/usr/lib/libLLVMLanaiInfo.so.5
-/usr/lib/libLLVMLanaiInfo.so.5.0.1
-/usr/lib/libLLVMLibDriver.so.5
-/usr/lib/libLLVMLibDriver.so.5.0.1
-/usr/lib/libLLVMLineEditor.so.5
-/usr/lib/libLLVMLineEditor.so.5.0.1
-/usr/lib/libLLVMLinker.so.5
-/usr/lib/libLLVMLinker.so.5.0.1
-/usr/lib/libLLVMMC.so.5
-/usr/lib/libLLVMMC.so.5.0.1
-/usr/lib/libLLVMMCDisassembler.so.5
-/usr/lib/libLLVMMCDisassembler.so.5.0.1
-/usr/lib/libLLVMMCJIT.so.5
-/usr/lib/libLLVMMCJIT.so.5.0.1
-/usr/lib/libLLVMMCParser.so.5
-/usr/lib/libLLVMMCParser.so.5.0.1
-/usr/lib/libLLVMMIRParser.so.5
-/usr/lib/libLLVMMIRParser.so.5.0.1
-/usr/lib/libLLVMMSP430AsmPrinter.so.5
-/usr/lib/libLLVMMSP430AsmPrinter.so.5.0.1
-/usr/lib/libLLVMMSP430CodeGen.so.5
-/usr/lib/libLLVMMSP430CodeGen.so.5.0.1
-/usr/lib/libLLVMMSP430Desc.so.5
-/usr/lib/libLLVMMSP430Desc.so.5.0.1
-/usr/lib/libLLVMMSP430Info.so.5
-/usr/lib/libLLVMMSP430Info.so.5.0.1
-/usr/lib/libLLVMMipsAsmParser.so.5
-/usr/lib/libLLVMMipsAsmParser.so.5.0.1
-/usr/lib/libLLVMMipsAsmPrinter.so.5
-/usr/lib/libLLVMMipsAsmPrinter.so.5.0.1
-/usr/lib/libLLVMMipsCodeGen.so.5
-/usr/lib/libLLVMMipsCodeGen.so.5.0.1
-/usr/lib/libLLVMMipsDesc.so.5
-/usr/lib/libLLVMMipsDesc.so.5.0.1
-/usr/lib/libLLVMMipsDisassembler.so.5
-/usr/lib/libLLVMMipsDisassembler.so.5.0.1
-/usr/lib/libLLVMMipsInfo.so.5
-/usr/lib/libLLVMMipsInfo.so.5.0.1
-/usr/lib/libLLVMNVPTXAsmPrinter.so.5
-/usr/lib/libLLVMNVPTXAsmPrinter.so.5.0.1
-/usr/lib/libLLVMNVPTXCodeGen.so.5
-/usr/lib/libLLVMNVPTXCodeGen.so.5.0.1
-/usr/lib/libLLVMNVPTXDesc.so.5
-/usr/lib/libLLVMNVPTXDesc.so.5.0.1
-/usr/lib/libLLVMNVPTXInfo.so.5
-/usr/lib/libLLVMNVPTXInfo.so.5.0.1
-/usr/lib/libLLVMObjCARCOpts.so.5
-/usr/lib/libLLVMObjCARCOpts.so.5.0.1
-/usr/lib/libLLVMObject.so.5
-/usr/lib/libLLVMObject.so.5.0.1
-/usr/lib/libLLVMObjectYAML.so.5
-/usr/lib/libLLVMObjectYAML.so.5.0.1
-/usr/lib/libLLVMOption.so.5
-/usr/lib/libLLVMOption.so.5.0.1
-/usr/lib/libLLVMOrcJIT.so.5
-/usr/lib/libLLVMOrcJIT.so.5.0.1
-/usr/lib/libLLVMPasses.so.5
-/usr/lib/libLLVMPasses.so.5.0.1
-/usr/lib/libLLVMPowerPCAsmParser.so.5
-/usr/lib/libLLVMPowerPCAsmParser.so.5.0.1
-/usr/lib/libLLVMPowerPCAsmPrinter.so.5
-/usr/lib/libLLVMPowerPCAsmPrinter.so.5.0.1
-/usr/lib/libLLVMPowerPCCodeGen.so.5
-/usr/lib/libLLVMPowerPCCodeGen.so.5.0.1
-/usr/lib/libLLVMPowerPCDesc.so.5
-/usr/lib/libLLVMPowerPCDesc.so.5.0.1
-/usr/lib/libLLVMPowerPCDisassembler.so.5
-/usr/lib/libLLVMPowerPCDisassembler.so.5.0.1
-/usr/lib/libLLVMPowerPCInfo.so.5
-/usr/lib/libLLVMPowerPCInfo.so.5.0.1
-/usr/lib/libLLVMProfileData.so.5
-/usr/lib/libLLVMProfileData.so.5.0.1
-/usr/lib/libLLVMRuntimeDyld.so.5
-/usr/lib/libLLVMRuntimeDyld.so.5.0.1
-/usr/lib/libLLVMScalarOpts.so.5
-/usr/lib/libLLVMScalarOpts.so.5.0.1
-/usr/lib/libLLVMSelectionDAG.so.5
-/usr/lib/libLLVMSelectionDAG.so.5.0.1
-/usr/lib/libLLVMSparcAsmParser.so.5
-/usr/lib/libLLVMSparcAsmParser.so.5.0.1
-/usr/lib/libLLVMSparcAsmPrinter.so.5
-/usr/lib/libLLVMSparcAsmPrinter.so.5.0.1
-/usr/lib/libLLVMSparcCodeGen.so.5
-/usr/lib/libLLVMSparcCodeGen.so.5.0.1
-/usr/lib/libLLVMSparcDesc.so.5
-/usr/lib/libLLVMSparcDesc.so.5.0.1
-/usr/lib/libLLVMSparcDisassembler.so.5
-/usr/lib/libLLVMSparcDisassembler.so.5.0.1
-/usr/lib/libLLVMSparcInfo.so.5
-/usr/lib/libLLVMSparcInfo.so.5.0.1
-/usr/lib/libLLVMSupport.so.5
-/usr/lib/libLLVMSupport.so.5.0.1
-/usr/lib/libLLVMSymbolize.so.5
-/usr/lib/libLLVMSymbolize.so.5.0.1
-/usr/lib/libLLVMSystemZAsmParser.so.5
-/usr/lib/libLLVMSystemZAsmParser.so.5.0.1
-/usr/lib/libLLVMSystemZAsmPrinter.so.5
-/usr/lib/libLLVMSystemZAsmPrinter.so.5.0.1
-/usr/lib/libLLVMSystemZCodeGen.so.5
-/usr/lib/libLLVMSystemZCodeGen.so.5.0.1
-/usr/lib/libLLVMSystemZDesc.so.5
-/usr/lib/libLLVMSystemZDesc.so.5.0.1
-/usr/lib/libLLVMSystemZDisassembler.so.5
-/usr/lib/libLLVMSystemZDisassembler.so.5.0.1
-/usr/lib/libLLVMSystemZInfo.so.5
-/usr/lib/libLLVMSystemZInfo.so.5.0.1
-/usr/lib/libLLVMTableGen.so.5
-/usr/lib/libLLVMTableGen.so.5.0.1
-/usr/lib/libLLVMTarget.so.5
-/usr/lib/libLLVMTarget.so.5.0.1
-/usr/lib/libLLVMTransformUtils.so.5
-/usr/lib/libLLVMTransformUtils.so.5.0.1
-/usr/lib/libLLVMVectorize.so.5
-/usr/lib/libLLVMVectorize.so.5.0.1
-/usr/lib/libLLVMX86AsmParser.so.5
-/usr/lib/libLLVMX86AsmParser.so.5.0.1
-/usr/lib/libLLVMX86AsmPrinter.so.5
-/usr/lib/libLLVMX86AsmPrinter.so.5.0.1
-/usr/lib/libLLVMX86CodeGen.so.5
-/usr/lib/libLLVMX86CodeGen.so.5.0.1
-/usr/lib/libLLVMX86Desc.so.5
-/usr/lib/libLLVMX86Desc.so.5.0.1
-/usr/lib/libLLVMX86Disassembler.so.5
-/usr/lib/libLLVMX86Disassembler.so.5.0.1
-/usr/lib/libLLVMX86Info.so.5
-/usr/lib/libLLVMX86Info.so.5.0.1
-/usr/lib/libLLVMX86Utils.so.5
-/usr/lib/libLLVMX86Utils.so.5.0.1
-/usr/lib/libLLVMXCoreAsmPrinter.so.5
-/usr/lib/libLLVMXCoreAsmPrinter.so.5.0.1
-/usr/lib/libLLVMXCoreCodeGen.so.5
-/usr/lib/libLLVMXCoreCodeGen.so.5.0.1
-/usr/lib/libLLVMXCoreDesc.so.5
-/usr/lib/libLLVMXCoreDesc.so.5.0.1
-/usr/lib/libLLVMXCoreDisassembler.so.5
-/usr/lib/libLLVMXCoreDisassembler.so.5.0.1
-/usr/lib/libLLVMXCoreInfo.so.5
-/usr/lib/libLLVMXCoreInfo.so.5.0.1
-/usr/lib/libLLVMXRay.so.5
-/usr/lib/libLLVMXRay.so.5.0.1
-/usr/lib/libLLVMipo.so.5
-/usr/lib/libLLVMipo.so.5.0.1
-/usr/lib/libLTO.so.5
-/usr/lib/libLTO.so.5.0.1
+/usr/lib64/libLLVMAMDGPUAsmParser.so.5
+/usr/lib64/libLLVMAMDGPUAsmParser.so.5.0.1
+/usr/lib64/libLLVMAMDGPUAsmPrinter.so.5
+/usr/lib64/libLLVMAMDGPUAsmPrinter.so.5.0.1
+/usr/lib64/libLLVMAMDGPUCodeGen.so.5
+/usr/lib64/libLLVMAMDGPUCodeGen.so.5.0.1
+/usr/lib64/libLLVMAMDGPUDesc.so.5
+/usr/lib64/libLLVMAMDGPUDesc.so.5.0.1
+/usr/lib64/libLLVMAMDGPUDisassembler.so.5
+/usr/lib64/libLLVMAMDGPUDisassembler.so.5.0.1
+/usr/lib64/libLLVMAMDGPUInfo.so.5
+/usr/lib64/libLLVMAMDGPUInfo.so.5.0.1
+/usr/lib64/libLLVMAMDGPUUtils.so.5
+/usr/lib64/libLLVMAMDGPUUtils.so.5.0.1
+/usr/lib64/libLLVMAnalysis.so.5
+/usr/lib64/libLLVMAnalysis.so.5.0.1
+/usr/lib64/libLLVMAsmParser.so.5
+/usr/lib64/libLLVMAsmParser.so.5.0.1
+/usr/lib64/libLLVMAsmPrinter.so.5
+/usr/lib64/libLLVMAsmPrinter.so.5.0.1
+/usr/lib64/libLLVMBPFAsmPrinter.so.5
+/usr/lib64/libLLVMBPFAsmPrinter.so.5.0.1
+/usr/lib64/libLLVMBPFCodeGen.so.5
+/usr/lib64/libLLVMBPFCodeGen.so.5.0.1
+/usr/lib64/libLLVMBPFDesc.so.5
+/usr/lib64/libLLVMBPFDesc.so.5.0.1
+/usr/lib64/libLLVMBPFDisassembler.so.5
+/usr/lib64/libLLVMBPFDisassembler.so.5.0.1
+/usr/lib64/libLLVMBPFInfo.so.5
+/usr/lib64/libLLVMBPFInfo.so.5.0.1
+/usr/lib64/libLLVMBinaryFormat.so.5
+/usr/lib64/libLLVMBinaryFormat.so.5.0.1
+/usr/lib64/libLLVMBitReader.so.5
+/usr/lib64/libLLVMBitReader.so.5.0.1
+/usr/lib64/libLLVMBitWriter.so.5
+/usr/lib64/libLLVMBitWriter.so.5.0.1
+/usr/lib64/libLLVMCodeGen.so.5
+/usr/lib64/libLLVMCodeGen.so.5.0.1
+/usr/lib64/libLLVMCore.so.5
+/usr/lib64/libLLVMCore.so.5.0.1
+/usr/lib64/libLLVMCoroutines.so.5
+/usr/lib64/libLLVMCoroutines.so.5.0.1
+/usr/lib64/libLLVMCoverage.so.5
+/usr/lib64/libLLVMCoverage.so.5.0.1
+/usr/lib64/libLLVMDebugInfoCodeView.so.5
+/usr/lib64/libLLVMDebugInfoCodeView.so.5.0.1
+/usr/lib64/libLLVMDebugInfoDWARF.so.5
+/usr/lib64/libLLVMDebugInfoDWARF.so.5.0.1
+/usr/lib64/libLLVMDebugInfoMSF.so.5
+/usr/lib64/libLLVMDebugInfoMSF.so.5.0.1
+/usr/lib64/libLLVMDebugInfoPDB.so.5
+/usr/lib64/libLLVMDebugInfoPDB.so.5.0.1
+/usr/lib64/libLLVMDemangle.so.5
+/usr/lib64/libLLVMDemangle.so.5.0.1
+/usr/lib64/libLLVMDlltoolDriver.so.5
+/usr/lib64/libLLVMDlltoolDriver.so.5.0.1
+/usr/lib64/libLLVMExecutionEngine.so.5
+/usr/lib64/libLLVMExecutionEngine.so.5.0.1
+/usr/lib64/libLLVMGlobalISel.so.5
+/usr/lib64/libLLVMGlobalISel.so.5.0.1
+/usr/lib64/libLLVMIRReader.so.5
+/usr/lib64/libLLVMIRReader.so.5.0.1
+/usr/lib64/libLLVMInstCombine.so.5
+/usr/lib64/libLLVMInstCombine.so.5.0.1
+/usr/lib64/libLLVMInstrumentation.so.5
+/usr/lib64/libLLVMInstrumentation.so.5.0.1
+/usr/lib64/libLLVMInterpreter.so.5
+/usr/lib64/libLLVMInterpreter.so.5.0.1
+/usr/lib64/libLLVMLTO.so.5
+/usr/lib64/libLLVMLTO.so.5.0.1
+/usr/lib64/libLLVMLibDriver.so.5
+/usr/lib64/libLLVMLibDriver.so.5.0.1
+/usr/lib64/libLLVMLineEditor.so.5
+/usr/lib64/libLLVMLineEditor.so.5.0.1
+/usr/lib64/libLLVMLinker.so.5
+/usr/lib64/libLLVMLinker.so.5.0.1
+/usr/lib64/libLLVMMC.so.5
+/usr/lib64/libLLVMMC.so.5.0.1
+/usr/lib64/libLLVMMCDisassembler.so.5
+/usr/lib64/libLLVMMCDisassembler.so.5.0.1
+/usr/lib64/libLLVMMCJIT.so.5
+/usr/lib64/libLLVMMCJIT.so.5.0.1
+/usr/lib64/libLLVMMCParser.so.5
+/usr/lib64/libLLVMMCParser.so.5.0.1
+/usr/lib64/libLLVMMIRParser.so.5
+/usr/lib64/libLLVMMIRParser.so.5.0.1
+/usr/lib64/libLLVMNVPTXAsmPrinter.so.5
+/usr/lib64/libLLVMNVPTXAsmPrinter.so.5.0.1
+/usr/lib64/libLLVMNVPTXCodeGen.so.5
+/usr/lib64/libLLVMNVPTXCodeGen.so.5.0.1
+/usr/lib64/libLLVMNVPTXDesc.so.5
+/usr/lib64/libLLVMNVPTXDesc.so.5.0.1
+/usr/lib64/libLLVMNVPTXInfo.so.5
+/usr/lib64/libLLVMNVPTXInfo.so.5.0.1
+/usr/lib64/libLLVMObjCARCOpts.so.5
+/usr/lib64/libLLVMObjCARCOpts.so.5.0.1
+/usr/lib64/libLLVMObject.so.5
+/usr/lib64/libLLVMObject.so.5.0.1
+/usr/lib64/libLLVMObjectYAML.so.5
+/usr/lib64/libLLVMObjectYAML.so.5.0.1
+/usr/lib64/libLLVMOption.so.5
+/usr/lib64/libLLVMOption.so.5.0.1
+/usr/lib64/libLLVMOrcJIT.so.5
+/usr/lib64/libLLVMOrcJIT.so.5.0.1
+/usr/lib64/libLLVMPasses.so.5
+/usr/lib64/libLLVMPasses.so.5.0.1
+/usr/lib64/libLLVMProfileData.so.5
+/usr/lib64/libLLVMProfileData.so.5.0.1
+/usr/lib64/libLLVMRuntimeDyld.so.5
+/usr/lib64/libLLVMRuntimeDyld.so.5.0.1
+/usr/lib64/libLLVMScalarOpts.so.5
+/usr/lib64/libLLVMScalarOpts.so.5.0.1
+/usr/lib64/libLLVMSelectionDAG.so.5
+/usr/lib64/libLLVMSelectionDAG.so.5.0.1
+/usr/lib64/libLLVMSupport.so.5
+/usr/lib64/libLLVMSupport.so.5.0.1
+/usr/lib64/libLLVMSymbolize.so.5
+/usr/lib64/libLLVMSymbolize.so.5.0.1
+/usr/lib64/libLLVMTableGen.so.5
+/usr/lib64/libLLVMTableGen.so.5.0.1
+/usr/lib64/libLLVMTarget.so.5
+/usr/lib64/libLLVMTarget.so.5.0.1
+/usr/lib64/libLLVMTransformUtils.so.5
+/usr/lib64/libLLVMTransformUtils.so.5.0.1
+/usr/lib64/libLLVMVectorize.so.5
+/usr/lib64/libLLVMVectorize.so.5.0.1
+/usr/lib64/libLLVMX86AsmParser.so.5
+/usr/lib64/libLLVMX86AsmParser.so.5.0.1
+/usr/lib64/libLLVMX86AsmPrinter.so.5
+/usr/lib64/libLLVMX86AsmPrinter.so.5.0.1
+/usr/lib64/libLLVMX86CodeGen.so.5
+/usr/lib64/libLLVMX86CodeGen.so.5.0.1
+/usr/lib64/libLLVMX86Desc.so.5
+/usr/lib64/libLLVMX86Desc.so.5.0.1
+/usr/lib64/libLLVMX86Disassembler.so.5
+/usr/lib64/libLLVMX86Disassembler.so.5.0.1
+/usr/lib64/libLLVMX86Info.so.5
+/usr/lib64/libLLVMX86Info.so.5.0.1
+/usr/lib64/libLLVMX86Utils.so.5
+/usr/lib64/libLLVMX86Utils.so.5.0.1
+/usr/lib64/libLLVMXRay.so.5
+/usr/lib64/libLLVMXRay.so.5.0.1
+/usr/lib64/libLLVMipo.so.5
+/usr/lib64/libLLVMipo.so.5.0.1
+/usr/lib64/libLTO.so.5
+/usr/lib64/libLTO.so.5.0.1
