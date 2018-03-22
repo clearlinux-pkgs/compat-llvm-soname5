@@ -6,9 +6,10 @@
 #
 Name     : compat-llvm-soname5
 Version  : 5.0.1
-Release  : 4
+Release  : 5
 URL      : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
 Source0  : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
+Source1  : http://releases.llvm.org/5.0.1/cfe-5.0.1.src.tar.xz
 Source99 : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz.sig
 Summary  : No detailed summary available
 Group    : Development/Tools
@@ -16,9 +17,11 @@ License  : BSD-3-Clause MIT NCSA
 Requires: compat-llvm-soname5-bin
 Requires: compat-llvm-soname5-lib
 Requires: compat-llvm-soname5-data
+Requires: compat-llvm-soname5-doc
 BuildRequires : binutils-dev
 BuildRequires : cmake
 BuildRequires : go
+BuildRequires : llvm-dev
 BuildRequires : pbr
 BuildRequires : pip
 BuildRequires : python-dev
@@ -57,6 +60,14 @@ Provides: compat-llvm-soname5-devel
 dev components for the compat-llvm-soname5 package.
 
 
+%package doc
+Summary: doc components for the compat-llvm-soname5 package.
+Group: Documentation
+
+%description doc
+doc components for the compat-llvm-soname5 package.
+
+
 %package lib
 Summary: lib components for the compat-llvm-soname5 package.
 Group: Libraries
@@ -67,22 +78,34 @@ lib components for the compat-llvm-soname5 package.
 
 
 %prep
+tar -xf %{SOURCE1}
+cd ..
 %setup -q -n llvm-5.0.1.src
+mkdir -p %{_topdir}/BUILD/llvm-5.0.1.src/tools/clang
+mv %{_topdir}/BUILD/cfe-5.0.1.src/* %{_topdir}/BUILD/llvm-5.0.1.src/tools/clang
 
 %build
 export http_proxy=http://127.0.0.1:9/
 export https_proxy=http://127.0.0.1:9/
 export no_proxy=localhost,127.0.0.1,0.0.0.0
 export LANG=C
-export SOURCE_DATE_EPOCH=1521747552
+export SOURCE_DATE_EPOCH=1521753212
+unset LD_AS_NEEDED
 mkdir clr-build
 pushd clr-build
+export CC=clang
+export CXX=clang++
+export LD=ld.gold
+export CFLAGS="-O2 -g -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=32 -Wformat -Wformat-security -Wno-error   -Wl,-z,max-page-size=0x1000 -m64 -march=westmere -mtune=haswell"
+export CXXFLAGS=$CFLAGS
+unset LDFLAGS
+unset LDFLAGS
 cmake .. -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_SHARED_LIBS:BOOL=ON -DLIB_INSTALL_DIR:PATH=/usr/lib64 -DCMAKE_AR=/usr/bin/gcc-ar -DLIB_SUFFIX=64 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_RANLIB=/usr/bin/gcc-ranlib -DLLVM_ENABLE_ZLIB:BOOL=ON  -DLLVM_LIBDIR_SUFFIX=64   -DLLVM_BINUTILS_INCDIR=/usr/include -DLLVM_TARGETS_TO_BUILD="X86;BPF;AMDGPU;NVPTX" -DLLVM_INSTALL_UTILS=ON -DLLVM_ENABLE_CXX1Y=ON -DC_INCLUDE_DIRS="/usr/include/c++:/usr/include/c++/x86_64-generic-linux:/usr/include"
 make  %{?_smp_mflags}
 popd
 
 %install
-export SOURCE_DATE_EPOCH=1521747552
+export SOURCE_DATE_EPOCH=1521753212
 rm -rf %{buildroot}
 pushd clr-build
 %make_install
@@ -90,12 +113,28 @@ popd
 
 %files
 %defattr(-,root,root,-)
+/usr/lib64/clang/5.0.1/include/cuda_wrappers/algorithm
+/usr/lib64/clang/5.0.1/include/cuda_wrappers/complex
+/usr/lib64/clang/5.0.1/include/cuda_wrappers/new
+/usr/lib64/clang/5.0.1/include/module.modulemap
 
 %files bin
 %defattr(-,root,root,-)
 %exclude /usr/bin/FileCheck
 %exclude /usr/bin/bugpoint
+%exclude /usr/bin/c-index-test
+%exclude /usr/bin/clang
+%exclude /usr/bin/clang++
+%exclude /usr/bin/clang-5.0
+%exclude /usr/bin/clang-check
+%exclude /usr/bin/clang-cl
+%exclude /usr/bin/clang-cpp
+%exclude /usr/bin/clang-format
+%exclude /usr/bin/clang-import-test
+%exclude /usr/bin/clang-offload-bundler
+%exclude /usr/bin/clang-rename
 %exclude /usr/bin/count
+%exclude /usr/bin/git-clang-format
 %exclude /usr/bin/llc
 %exclude /usr/bin/lli
 %exclude /usr/bin/lli-child-target
@@ -146,12 +185,26 @@ popd
 %exclude /usr/bin/opt
 %exclude /usr/bin/sancov
 %exclude /usr/bin/sanstats
+%exclude /usr/bin/scan-build
+%exclude /usr/bin/scan-view
 %exclude /usr/bin/verify-uselistorder
 %exclude /usr/bin/yaml-bench
 %exclude /usr/bin/yaml2obj
+%exclude /usr/libexec/c++-analyzer
+%exclude /usr/libexec/ccc-analyzer
 
 %files data
 %defattr(-,root,root,-)
+%exclude /usr/share/clang/__pycache__/clang-format-sublime.cpython-36.pyc
+%exclude /usr/share/clang/__pycache__/clang-format.cpython-36.pyc
+%exclude /usr/share/clang/bash-autocomplete.sh
+%exclude /usr/share/clang/clang-format-bbedit.applescript
+%exclude /usr/share/clang/clang-format-diff.py
+%exclude /usr/share/clang/clang-format-sublime.py
+%exclude /usr/share/clang/clang-format.el
+%exclude /usr/share/clang/clang-format.py
+%exclude /usr/share/clang/clang-rename.el
+%exclude /usr/share/clang/clang-rename.py
 %exclude /usr/share/opt-viewer/__pycache__/opt-diff.cpython-36.pyc
 %exclude /usr/share/opt-viewer/__pycache__/opt-stats.cpython-36.pyc
 %exclude /usr/share/opt-viewer/__pycache__/opt-viewer.cpython-36.pyc
@@ -163,9 +216,508 @@ popd
 %exclude /usr/share/opt-viewer/optpmap.py
 %exclude /usr/share/opt-viewer/optrecord.py
 %exclude /usr/share/opt-viewer/style.css
+%exclude /usr/share/scan-build/scanview.css
+%exclude /usr/share/scan-build/sorttable.js
+%exclude /usr/share/scan-view/FileRadar.scpt
+%exclude /usr/share/scan-view/GetRadarVersion.scpt
+%exclude /usr/share/scan-view/Reporter.py
+%exclude /usr/share/scan-view/ScanView.py
+%exclude /usr/share/scan-view/__pycache__/Reporter.cpython-36.pyc
+%exclude /usr/share/scan-view/__pycache__/startfile.cpython-36.pyc
+%exclude /usr/share/scan-view/bugcatcher.ico
+%exclude /usr/share/scan-view/startfile.py
 
 %files dev
 %defattr(-,root,root,-)
+%exclude /usr/include/clang-c/BuildSystem.h
+%exclude /usr/include/clang-c/CXCompilationDatabase.h
+%exclude /usr/include/clang-c/CXErrorCode.h
+%exclude /usr/include/clang-c/CXString.h
+%exclude /usr/include/clang-c/Documentation.h
+%exclude /usr/include/clang-c/Index.h
+%exclude /usr/include/clang-c/Platform.h
+%exclude /usr/include/clang/ARCMigrate/ARCMT.h
+%exclude /usr/include/clang/ARCMigrate/ARCMTActions.h
+%exclude /usr/include/clang/ARCMigrate/FileRemapper.h
+%exclude /usr/include/clang/AST/APValue.h
+%exclude /usr/include/clang/AST/AST.h
+%exclude /usr/include/clang/AST/ASTConsumer.h
+%exclude /usr/include/clang/AST/ASTContext.h
+%exclude /usr/include/clang/AST/ASTDiagnostic.h
+%exclude /usr/include/clang/AST/ASTFwd.h
+%exclude /usr/include/clang/AST/ASTImporter.h
+%exclude /usr/include/clang/AST/ASTLambda.h
+%exclude /usr/include/clang/AST/ASTMutationListener.h
+%exclude /usr/include/clang/AST/ASTStructuralEquivalence.h
+%exclude /usr/include/clang/AST/ASTTypeTraits.h
+%exclude /usr/include/clang/AST/ASTUnresolvedSet.h
+%exclude /usr/include/clang/AST/ASTVector.h
+%exclude /usr/include/clang/AST/Attr.h
+%exclude /usr/include/clang/AST/AttrDump.inc
+%exclude /usr/include/clang/AST/AttrImpl.inc
+%exclude /usr/include/clang/AST/AttrIterator.h
+%exclude /usr/include/clang/AST/AttrVisitor.inc
+%exclude /usr/include/clang/AST/Attrs.inc
+%exclude /usr/include/clang/AST/Availability.h
+%exclude /usr/include/clang/AST/BaseSubobject.h
+%exclude /usr/include/clang/AST/BuiltinTypes.def
+%exclude /usr/include/clang/AST/CXXInheritance.h
+%exclude /usr/include/clang/AST/CanonicalType.h
+%exclude /usr/include/clang/AST/CharUnits.h
+%exclude /usr/include/clang/AST/Comment.h
+%exclude /usr/include/clang/AST/CommentBriefParser.h
+%exclude /usr/include/clang/AST/CommentCommandInfo.inc
+%exclude /usr/include/clang/AST/CommentCommandList.inc
+%exclude /usr/include/clang/AST/CommentCommandTraits.h
+%exclude /usr/include/clang/AST/CommentDiagnostic.h
+%exclude /usr/include/clang/AST/CommentHTMLNamedCharacterReferences.inc
+%exclude /usr/include/clang/AST/CommentHTMLTags.inc
+%exclude /usr/include/clang/AST/CommentHTMLTagsProperties.inc
+%exclude /usr/include/clang/AST/CommentLexer.h
+%exclude /usr/include/clang/AST/CommentNodes.inc
+%exclude /usr/include/clang/AST/CommentParser.h
+%exclude /usr/include/clang/AST/CommentSema.h
+%exclude /usr/include/clang/AST/CommentVisitor.h
+%exclude /usr/include/clang/AST/Decl.h
+%exclude /usr/include/clang/AST/DeclAccessPair.h
+%exclude /usr/include/clang/AST/DeclBase.h
+%exclude /usr/include/clang/AST/DeclCXX.h
+%exclude /usr/include/clang/AST/DeclContextInternals.h
+%exclude /usr/include/clang/AST/DeclFriend.h
+%exclude /usr/include/clang/AST/DeclGroup.h
+%exclude /usr/include/clang/AST/DeclLookups.h
+%exclude /usr/include/clang/AST/DeclNodes.inc
+%exclude /usr/include/clang/AST/DeclObjC.h
+%exclude /usr/include/clang/AST/DeclOpenMP.h
+%exclude /usr/include/clang/AST/DeclTemplate.h
+%exclude /usr/include/clang/AST/DeclVisitor.h
+%exclude /usr/include/clang/AST/DeclarationName.h
+%exclude /usr/include/clang/AST/DependentDiagnostic.h
+%exclude /usr/include/clang/AST/EvaluatedExprVisitor.h
+%exclude /usr/include/clang/AST/Expr.h
+%exclude /usr/include/clang/AST/ExprCXX.h
+%exclude /usr/include/clang/AST/ExprObjC.h
+%exclude /usr/include/clang/AST/ExprOpenMP.h
+%exclude /usr/include/clang/AST/ExternalASTMerger.h
+%exclude /usr/include/clang/AST/ExternalASTSource.h
+%exclude /usr/include/clang/AST/GlobalDecl.h
+%exclude /usr/include/clang/AST/LambdaCapture.h
+%exclude /usr/include/clang/AST/LocInfoType.h
+%exclude /usr/include/clang/AST/Mangle.h
+%exclude /usr/include/clang/AST/MangleNumberingContext.h
+%exclude /usr/include/clang/AST/NSAPI.h
+%exclude /usr/include/clang/AST/NestedNameSpecifier.h
+%exclude /usr/include/clang/AST/ODRHash.h
+%exclude /usr/include/clang/AST/OpenMPClause.h
+%exclude /usr/include/clang/AST/OperationKinds.def
+%exclude /usr/include/clang/AST/OperationKinds.h
+%exclude /usr/include/clang/AST/ParentMap.h
+%exclude /usr/include/clang/AST/PrettyPrinter.h
+%exclude /usr/include/clang/AST/RawCommentList.h
+%exclude /usr/include/clang/AST/RecordLayout.h
+%exclude /usr/include/clang/AST/RecursiveASTVisitor.h
+%exclude /usr/include/clang/AST/Redeclarable.h
+%exclude /usr/include/clang/AST/SelectorLocationsKind.h
+%exclude /usr/include/clang/AST/Stmt.h
+%exclude /usr/include/clang/AST/StmtCXX.h
+%exclude /usr/include/clang/AST/StmtGraphTraits.h
+%exclude /usr/include/clang/AST/StmtIterator.h
+%exclude /usr/include/clang/AST/StmtNodes.inc
+%exclude /usr/include/clang/AST/StmtObjC.h
+%exclude /usr/include/clang/AST/StmtOpenMP.h
+%exclude /usr/include/clang/AST/StmtVisitor.h
+%exclude /usr/include/clang/AST/TemplateBase.h
+%exclude /usr/include/clang/AST/TemplateName.h
+%exclude /usr/include/clang/AST/Type.h
+%exclude /usr/include/clang/AST/TypeLoc.h
+%exclude /usr/include/clang/AST/TypeLocNodes.def
+%exclude /usr/include/clang/AST/TypeLocVisitor.h
+%exclude /usr/include/clang/AST/TypeNodes.def
+%exclude /usr/include/clang/AST/TypeOrdering.h
+%exclude /usr/include/clang/AST/TypeVisitor.h
+%exclude /usr/include/clang/AST/UnresolvedSet.h
+%exclude /usr/include/clang/AST/VTTBuilder.h
+%exclude /usr/include/clang/AST/VTableBuilder.h
+%exclude /usr/include/clang/ASTMatchers/ASTMatchFinder.h
+%exclude /usr/include/clang/ASTMatchers/ASTMatchers.h
+%exclude /usr/include/clang/ASTMatchers/ASTMatchersInternal.h
+%exclude /usr/include/clang/ASTMatchers/ASTMatchersMacros.h
+%exclude /usr/include/clang/ASTMatchers/Dynamic/Diagnostics.h
+%exclude /usr/include/clang/ASTMatchers/Dynamic/Parser.h
+%exclude /usr/include/clang/ASTMatchers/Dynamic/Registry.h
+%exclude /usr/include/clang/ASTMatchers/Dynamic/VariantValue.h
+%exclude /usr/include/clang/Analysis/Analyses/CFGReachabilityAnalysis.h
+%exclude /usr/include/clang/Analysis/Analyses/Consumed.h
+%exclude /usr/include/clang/Analysis/Analyses/Dominators.h
+%exclude /usr/include/clang/Analysis/Analyses/FormatString.h
+%exclude /usr/include/clang/Analysis/Analyses/LiveVariables.h
+%exclude /usr/include/clang/Analysis/Analyses/OSLog.h
+%exclude /usr/include/clang/Analysis/Analyses/PostOrderCFGView.h
+%exclude /usr/include/clang/Analysis/Analyses/PseudoConstantAnalysis.h
+%exclude /usr/include/clang/Analysis/Analyses/ReachableCode.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafety.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyCommon.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyLogical.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyOps.def
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyTIL.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyTraverse.h
+%exclude /usr/include/clang/Analysis/Analyses/ThreadSafetyUtil.h
+%exclude /usr/include/clang/Analysis/Analyses/UninitializedValues.h
+%exclude /usr/include/clang/Analysis/AnalysisContext.h
+%exclude /usr/include/clang/Analysis/AnalysisDiagnostic.h
+%exclude /usr/include/clang/Analysis/CFG.h
+%exclude /usr/include/clang/Analysis/CFGStmtMap.h
+%exclude /usr/include/clang/Analysis/CallGraph.h
+%exclude /usr/include/clang/Analysis/CloneDetection.h
+%exclude /usr/include/clang/Analysis/CodeInjector.h
+%exclude /usr/include/clang/Analysis/DomainSpecific/CocoaConventions.h
+%exclude /usr/include/clang/Analysis/DomainSpecific/ObjCNoReturn.h
+%exclude /usr/include/clang/Analysis/FlowSensitive/DataflowValues.h
+%exclude /usr/include/clang/Analysis/ProgramPoint.h
+%exclude /usr/include/clang/Analysis/Support/BumpVector.h
+%exclude /usr/include/clang/Basic/ABI.h
+%exclude /usr/include/clang/Basic/AddressSpaces.h
+%exclude /usr/include/clang/Basic/AllDiagnostics.h
+%exclude /usr/include/clang/Basic/AttrHasAttributeImpl.inc
+%exclude /usr/include/clang/Basic/AttrKinds.h
+%exclude /usr/include/clang/Basic/AttrList.inc
+%exclude /usr/include/clang/Basic/AttrSubMatchRulesList.inc
+%exclude /usr/include/clang/Basic/AttrSubjectMatchRules.h
+%exclude /usr/include/clang/Basic/Attributes.h
+%exclude /usr/include/clang/Basic/Builtins.def
+%exclude /usr/include/clang/Basic/Builtins.h
+%exclude /usr/include/clang/Basic/BuiltinsAArch64.def
+%exclude /usr/include/clang/Basic/BuiltinsAMDGPU.def
+%exclude /usr/include/clang/Basic/BuiltinsARM.def
+%exclude /usr/include/clang/Basic/BuiltinsHexagon.def
+%exclude /usr/include/clang/Basic/BuiltinsLe64.def
+%exclude /usr/include/clang/Basic/BuiltinsMips.def
+%exclude /usr/include/clang/Basic/BuiltinsNEON.def
+%exclude /usr/include/clang/Basic/BuiltinsNVPTX.def
+%exclude /usr/include/clang/Basic/BuiltinsNios2.def
+%exclude /usr/include/clang/Basic/BuiltinsPPC.def
+%exclude /usr/include/clang/Basic/BuiltinsSystemZ.def
+%exclude /usr/include/clang/Basic/BuiltinsWebAssembly.def
+%exclude /usr/include/clang/Basic/BuiltinsX86.def
+%exclude /usr/include/clang/Basic/BuiltinsX86_64.def
+%exclude /usr/include/clang/Basic/BuiltinsXCore.def
+%exclude /usr/include/clang/Basic/CapturedStmt.h
+%exclude /usr/include/clang/Basic/CharInfo.h
+%exclude /usr/include/clang/Basic/CommentOptions.h
+%exclude /usr/include/clang/Basic/Cuda.h
+%exclude /usr/include/clang/Basic/DebugInfoOptions.h
+%exclude /usr/include/clang/Basic/Diagnostic.h
+%exclude /usr/include/clang/Basic/DiagnosticASTKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticAnalysisKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticCategories.h
+%exclude /usr/include/clang/Basic/DiagnosticCommentKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticCommonKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticDriverKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticFrontendKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticGroups.inc
+%exclude /usr/include/clang/Basic/DiagnosticIDs.h
+%exclude /usr/include/clang/Basic/DiagnosticIndexName.inc
+%exclude /usr/include/clang/Basic/DiagnosticLexKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticOptions.def
+%exclude /usr/include/clang/Basic/DiagnosticOptions.h
+%exclude /usr/include/clang/Basic/DiagnosticParseKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticSemaKinds.inc
+%exclude /usr/include/clang/Basic/DiagnosticSerializationKinds.inc
+%exclude /usr/include/clang/Basic/ExceptionSpecificationType.h
+%exclude /usr/include/clang/Basic/ExpressionTraits.h
+%exclude /usr/include/clang/Basic/FileManager.h
+%exclude /usr/include/clang/Basic/FileSystemOptions.h
+%exclude /usr/include/clang/Basic/FileSystemStatCache.h
+%exclude /usr/include/clang/Basic/IdentifierTable.h
+%exclude /usr/include/clang/Basic/LLVM.h
+%exclude /usr/include/clang/Basic/Lambda.h
+%exclude /usr/include/clang/Basic/LangOptions.def
+%exclude /usr/include/clang/Basic/LangOptions.h
+%exclude /usr/include/clang/Basic/Linkage.h
+%exclude /usr/include/clang/Basic/MacroBuilder.h
+%exclude /usr/include/clang/Basic/MemoryBufferCache.h
+%exclude /usr/include/clang/Basic/Module.h
+%exclude /usr/include/clang/Basic/ObjCRuntime.h
+%exclude /usr/include/clang/Basic/OpenCLExtensions.def
+%exclude /usr/include/clang/Basic/OpenCLImageTypes.def
+%exclude /usr/include/clang/Basic/OpenCLOptions.h
+%exclude /usr/include/clang/Basic/OpenMPKinds.def
+%exclude /usr/include/clang/Basic/OpenMPKinds.h
+%exclude /usr/include/clang/Basic/OperatorKinds.def
+%exclude /usr/include/clang/Basic/OperatorKinds.h
+%exclude /usr/include/clang/Basic/OperatorPrecedence.h
+%exclude /usr/include/clang/Basic/PartialDiagnostic.h
+%exclude /usr/include/clang/Basic/PlistSupport.h
+%exclude /usr/include/clang/Basic/PragmaKinds.h
+%exclude /usr/include/clang/Basic/PrettyStackTrace.h
+%exclude /usr/include/clang/Basic/SanitizerBlacklist.h
+%exclude /usr/include/clang/Basic/Sanitizers.def
+%exclude /usr/include/clang/Basic/Sanitizers.h
+%exclude /usr/include/clang/Basic/SourceLocation.h
+%exclude /usr/include/clang/Basic/SourceManager.h
+%exclude /usr/include/clang/Basic/SourceManagerInternals.h
+%exclude /usr/include/clang/Basic/Specifiers.h
+%exclude /usr/include/clang/Basic/TargetBuiltins.h
+%exclude /usr/include/clang/Basic/TargetCXXABI.h
+%exclude /usr/include/clang/Basic/TargetInfo.h
+%exclude /usr/include/clang/Basic/TargetOptions.h
+%exclude /usr/include/clang/Basic/TemplateKinds.h
+%exclude /usr/include/clang/Basic/TokenKinds.def
+%exclude /usr/include/clang/Basic/TokenKinds.h
+%exclude /usr/include/clang/Basic/TypeTraits.h
+%exclude /usr/include/clang/Basic/Version.h
+%exclude /usr/include/clang/Basic/Version.inc
+%exclude /usr/include/clang/Basic/VersionTuple.h
+%exclude /usr/include/clang/Basic/VirtualFileSystem.h
+%exclude /usr/include/clang/Basic/Visibility.h
+%exclude /usr/include/clang/Basic/XRayLists.h
+%exclude /usr/include/clang/Basic/arm_neon.inc
+%exclude /usr/include/clang/CodeGen/BackendUtil.h
+%exclude /usr/include/clang/CodeGen/CGFunctionInfo.h
+%exclude /usr/include/clang/CodeGen/CodeGenABITypes.h
+%exclude /usr/include/clang/CodeGen/CodeGenAction.h
+%exclude /usr/include/clang/CodeGen/ConstantInitBuilder.h
+%exclude /usr/include/clang/CodeGen/ConstantInitFuture.h
+%exclude /usr/include/clang/CodeGen/ModuleBuilder.h
+%exclude /usr/include/clang/CodeGen/ObjectFilePCHContainerOperations.h
+%exclude /usr/include/clang/CodeGen/SwiftCallingConv.h
+%exclude /usr/include/clang/Config/config.h
+%exclude /usr/include/clang/Driver/Action.h
+%exclude /usr/include/clang/Driver/Compilation.h
+%exclude /usr/include/clang/Driver/Distro.h
+%exclude /usr/include/clang/Driver/Driver.h
+%exclude /usr/include/clang/Driver/DriverDiagnostic.h
+%exclude /usr/include/clang/Driver/Job.h
+%exclude /usr/include/clang/Driver/Multilib.h
+%exclude /usr/include/clang/Driver/Options.h
+%exclude /usr/include/clang/Driver/Options.inc
+%exclude /usr/include/clang/Driver/Phases.h
+%exclude /usr/include/clang/Driver/SanitizerArgs.h
+%exclude /usr/include/clang/Driver/Tool.h
+%exclude /usr/include/clang/Driver/ToolChain.h
+%exclude /usr/include/clang/Driver/Types.def
+%exclude /usr/include/clang/Driver/Types.h
+%exclude /usr/include/clang/Driver/Util.h
+%exclude /usr/include/clang/Driver/XRayArgs.h
+%exclude /usr/include/clang/Edit/Commit.h
+%exclude /usr/include/clang/Edit/EditedSource.h
+%exclude /usr/include/clang/Edit/EditsReceiver.h
+%exclude /usr/include/clang/Edit/FileOffset.h
+%exclude /usr/include/clang/Edit/Rewriters.h
+%exclude /usr/include/clang/Format/Format.h
+%exclude /usr/include/clang/Frontend/ASTConsumers.h
+%exclude /usr/include/clang/Frontend/ASTUnit.h
+%exclude /usr/include/clang/Frontend/ChainedDiagnosticConsumer.h
+%exclude /usr/include/clang/Frontend/CodeGenOptions.def
+%exclude /usr/include/clang/Frontend/CodeGenOptions.h
+%exclude /usr/include/clang/Frontend/CommandLineSourceLoc.h
+%exclude /usr/include/clang/Frontend/CompilerInstance.h
+%exclude /usr/include/clang/Frontend/CompilerInvocation.h
+%exclude /usr/include/clang/Frontend/DependencyOutputOptions.h
+%exclude /usr/include/clang/Frontend/DiagnosticRenderer.h
+%exclude /usr/include/clang/Frontend/FrontendAction.h
+%exclude /usr/include/clang/Frontend/FrontendActions.h
+%exclude /usr/include/clang/Frontend/FrontendDiagnostic.h
+%exclude /usr/include/clang/Frontend/FrontendOptions.h
+%exclude /usr/include/clang/Frontend/FrontendPluginRegistry.h
+%exclude /usr/include/clang/Frontend/LangStandard.h
+%exclude /usr/include/clang/Frontend/LangStandards.def
+%exclude /usr/include/clang/Frontend/LayoutOverrideSource.h
+%exclude /usr/include/clang/Frontend/LogDiagnosticPrinter.h
+%exclude /usr/include/clang/Frontend/MigratorOptions.h
+%exclude /usr/include/clang/Frontend/MultiplexConsumer.h
+%exclude /usr/include/clang/Frontend/PCHContainerOperations.h
+%exclude /usr/include/clang/Frontend/PrecompiledPreamble.h
+%exclude /usr/include/clang/Frontend/PreprocessorOutputOptions.h
+%exclude /usr/include/clang/Frontend/SerializedDiagnosticPrinter.h
+%exclude /usr/include/clang/Frontend/SerializedDiagnosticReader.h
+%exclude /usr/include/clang/Frontend/SerializedDiagnostics.h
+%exclude /usr/include/clang/Frontend/TextDiagnostic.h
+%exclude /usr/include/clang/Frontend/TextDiagnosticBuffer.h
+%exclude /usr/include/clang/Frontend/TextDiagnosticPrinter.h
+%exclude /usr/include/clang/Frontend/Utils.h
+%exclude /usr/include/clang/Frontend/VerifyDiagnosticConsumer.h
+%exclude /usr/include/clang/FrontendTool/Utils.h
+%exclude /usr/include/clang/Index/CodegenNameGenerator.h
+%exclude /usr/include/clang/Index/CommentToXML.h
+%exclude /usr/include/clang/Index/IndexDataConsumer.h
+%exclude /usr/include/clang/Index/IndexSymbol.h
+%exclude /usr/include/clang/Index/IndexingAction.h
+%exclude /usr/include/clang/Index/USRGeneration.h
+%exclude /usr/include/clang/Lex/CodeCompletionHandler.h
+%exclude /usr/include/clang/Lex/DirectoryLookup.h
+%exclude /usr/include/clang/Lex/ExternalPreprocessorSource.h
+%exclude /usr/include/clang/Lex/HeaderMap.h
+%exclude /usr/include/clang/Lex/HeaderMapTypes.h
+%exclude /usr/include/clang/Lex/HeaderSearch.h
+%exclude /usr/include/clang/Lex/HeaderSearchOptions.h
+%exclude /usr/include/clang/Lex/LexDiagnostic.h
+%exclude /usr/include/clang/Lex/Lexer.h
+%exclude /usr/include/clang/Lex/LiteralSupport.h
+%exclude /usr/include/clang/Lex/MacroArgs.h
+%exclude /usr/include/clang/Lex/MacroInfo.h
+%exclude /usr/include/clang/Lex/ModuleLoader.h
+%exclude /usr/include/clang/Lex/ModuleMap.h
+%exclude /usr/include/clang/Lex/MultipleIncludeOpt.h
+%exclude /usr/include/clang/Lex/PPCallbacks.h
+%exclude /usr/include/clang/Lex/PPConditionalDirectiveRecord.h
+%exclude /usr/include/clang/Lex/PTHLexer.h
+%exclude /usr/include/clang/Lex/PTHManager.h
+%exclude /usr/include/clang/Lex/Pragma.h
+%exclude /usr/include/clang/Lex/PreprocessingRecord.h
+%exclude /usr/include/clang/Lex/Preprocessor.h
+%exclude /usr/include/clang/Lex/PreprocessorLexer.h
+%exclude /usr/include/clang/Lex/PreprocessorOptions.h
+%exclude /usr/include/clang/Lex/ScratchBuffer.h
+%exclude /usr/include/clang/Lex/Token.h
+%exclude /usr/include/clang/Lex/TokenConcatenation.h
+%exclude /usr/include/clang/Lex/TokenLexer.h
+%exclude /usr/include/clang/Parse/AttrParserStringSwitches.inc
+%exclude /usr/include/clang/Parse/AttrSubMatchRulesParserStringSwitches.inc
+%exclude /usr/include/clang/Parse/ParseAST.h
+%exclude /usr/include/clang/Parse/ParseDiagnostic.h
+%exclude /usr/include/clang/Parse/Parser.h
+%exclude /usr/include/clang/Parse/RAIIObjectsForParser.h
+%exclude /usr/include/clang/Rewrite/Core/DeltaTree.h
+%exclude /usr/include/clang/Rewrite/Core/HTMLRewrite.h
+%exclude /usr/include/clang/Rewrite/Core/RewriteBuffer.h
+%exclude /usr/include/clang/Rewrite/Core/RewriteRope.h
+%exclude /usr/include/clang/Rewrite/Core/Rewriter.h
+%exclude /usr/include/clang/Rewrite/Core/TokenRewriter.h
+%exclude /usr/include/clang/Rewrite/Frontend/ASTConsumers.h
+%exclude /usr/include/clang/Rewrite/Frontend/FixItRewriter.h
+%exclude /usr/include/clang/Rewrite/Frontend/FrontendActions.h
+%exclude /usr/include/clang/Rewrite/Frontend/Rewriters.h
+%exclude /usr/include/clang/Sema/AnalysisBasedWarnings.h
+%exclude /usr/include/clang/Sema/AttrParsedAttrImpl.inc
+%exclude /usr/include/clang/Sema/AttrParsedAttrKinds.inc
+%exclude /usr/include/clang/Sema/AttrParsedAttrList.inc
+%exclude /usr/include/clang/Sema/AttrSpellingListIndex.inc
+%exclude /usr/include/clang/Sema/AttrTemplateInstantiate.inc
+%exclude /usr/include/clang/Sema/AttributeList.h
+%exclude /usr/include/clang/Sema/CXXFieldCollector.h
+%exclude /usr/include/clang/Sema/CleanupInfo.h
+%exclude /usr/include/clang/Sema/CodeCompleteConsumer.h
+%exclude /usr/include/clang/Sema/CodeCompleteOptions.h
+%exclude /usr/include/clang/Sema/DeclSpec.h
+%exclude /usr/include/clang/Sema/DelayedDiagnostic.h
+%exclude /usr/include/clang/Sema/Designator.h
+%exclude /usr/include/clang/Sema/ExternalSemaSource.h
+%exclude /usr/include/clang/Sema/IdentifierResolver.h
+%exclude /usr/include/clang/Sema/Initialization.h
+%exclude /usr/include/clang/Sema/Lookup.h
+%exclude /usr/include/clang/Sema/LoopHint.h
+%exclude /usr/include/clang/Sema/MultiplexExternalSemaSource.h
+%exclude /usr/include/clang/Sema/ObjCMethodList.h
+%exclude /usr/include/clang/Sema/Overload.h
+%exclude /usr/include/clang/Sema/Ownership.h
+%exclude /usr/include/clang/Sema/ParsedTemplate.h
+%exclude /usr/include/clang/Sema/PrettyDeclStackTrace.h
+%exclude /usr/include/clang/Sema/Scope.h
+%exclude /usr/include/clang/Sema/ScopeInfo.h
+%exclude /usr/include/clang/Sema/Sema.h
+%exclude /usr/include/clang/Sema/SemaConsumer.h
+%exclude /usr/include/clang/Sema/SemaDiagnostic.h
+%exclude /usr/include/clang/Sema/SemaFixItUtils.h
+%exclude /usr/include/clang/Sema/SemaInternal.h
+%exclude /usr/include/clang/Sema/SemaLambda.h
+%exclude /usr/include/clang/Sema/Template.h
+%exclude /usr/include/clang/Sema/TemplateDeduction.h
+%exclude /usr/include/clang/Sema/TypoCorrection.h
+%exclude /usr/include/clang/Sema/Weak.h
+%exclude /usr/include/clang/Serialization/ASTBitCodes.h
+%exclude /usr/include/clang/Serialization/ASTDeserializationListener.h
+%exclude /usr/include/clang/Serialization/ASTReader.h
+%exclude /usr/include/clang/Serialization/ASTWriter.h
+%exclude /usr/include/clang/Serialization/AttrPCHRead.inc
+%exclude /usr/include/clang/Serialization/AttrPCHWrite.inc
+%exclude /usr/include/clang/Serialization/ContinuousRangeMap.h
+%exclude /usr/include/clang/Serialization/GlobalModuleIndex.h
+%exclude /usr/include/clang/Serialization/Module.h
+%exclude /usr/include/clang/Serialization/ModuleFileExtension.h
+%exclude /usr/include/clang/Serialization/ModuleManager.h
+%exclude /usr/include/clang/Serialization/SerializationDiagnostic.h
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/Checkers.inc
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/ClangCheckers.h
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/LocalCheckers.h
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/MPIFunctionClassifier.h
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/ObjCRetainCount.h
+%exclude /usr/include/clang/StaticAnalyzer/Checkers/SValExplainer.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/Analyses.def
+%exclude /usr/include/clang/StaticAnalyzer/Core/AnalyzerOptions.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/BugReporter/BugReporter.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/BugReporter/BugReporterVisitor.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/BugReporter/BugType.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/BugReporter/CommonBugCategories.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/Checker.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/CheckerManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/CheckerOptInfo.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/CheckerRegistry.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/IssueHash.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/APSIntType.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/BlockCounter.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/CallEvent.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/CheckerHelpers.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ConstraintManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/DynamicTypeInfo.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/DynamicTypeMap.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/Environment.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/FunctionSummary.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/LoopWidening.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/ProgramState_Fwd.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/Regions.def
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SValVisitor.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SVals.def
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SVals.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SimpleConstraintManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/Store.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SubEngine.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SummaryManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SymExpr.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/Symbols.def
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/TaintManager.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/TaintTag.h
+%exclude /usr/include/clang/StaticAnalyzer/Core/PathSensitive/WorkList.h
+%exclude /usr/include/clang/StaticAnalyzer/Frontend/AnalysisConsumer.h
+%exclude /usr/include/clang/StaticAnalyzer/Frontend/CheckerRegistration.h
+%exclude /usr/include/clang/StaticAnalyzer/Frontend/FrontendActions.h
+%exclude /usr/include/clang/StaticAnalyzer/Frontend/ModelConsumer.h
+%exclude /usr/include/clang/Tooling/ArgumentsAdjusters.h
+%exclude /usr/include/clang/Tooling/CommonOptionsParser.h
+%exclude /usr/include/clang/Tooling/CompilationDatabase.h
+%exclude /usr/include/clang/Tooling/CompilationDatabasePluginRegistry.h
+%exclude /usr/include/clang/Tooling/Core/Diagnostic.h
+%exclude /usr/include/clang/Tooling/Core/Lookup.h
+%exclude /usr/include/clang/Tooling/Core/QualTypeNames.h
+%exclude /usr/include/clang/Tooling/Core/Replacement.h
+%exclude /usr/include/clang/Tooling/DiagnosticsYaml.h
+%exclude /usr/include/clang/Tooling/FileMatchTrie.h
+%exclude /usr/include/clang/Tooling/FixIt.h
+%exclude /usr/include/clang/Tooling/JSONCompilationDatabase.h
+%exclude /usr/include/clang/Tooling/Refactoring.h
+%exclude /usr/include/clang/Tooling/Refactoring/AtomicChange.h
+%exclude /usr/include/clang/Tooling/Refactoring/RecursiveSymbolVisitor.h
+%exclude /usr/include/clang/Tooling/Refactoring/Rename/RenamingAction.h
+%exclude /usr/include/clang/Tooling/Refactoring/Rename/USRFinder.h
+%exclude /usr/include/clang/Tooling/Refactoring/Rename/USRFindingAction.h
+%exclude /usr/include/clang/Tooling/Refactoring/Rename/USRLocFinder.h
+%exclude /usr/include/clang/Tooling/RefactoringCallbacks.h
+%exclude /usr/include/clang/Tooling/ReplacementsYaml.h
+%exclude /usr/include/clang/Tooling/Tooling.h
 %exclude /usr/include/llvm-c/Analysis.h
 %exclude /usr/include/llvm-c/BitReader.h
 %exclude /usr/include/llvm-c/BitWriter.h
@@ -1289,6 +1841,101 @@ popd
 %exclude /usr/lib64/BugpointPasses.so
 %exclude /usr/lib64/LLVMHello.so
 %exclude /usr/lib64/LLVMgold.so
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_builtin_vars.h
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_cmath.h
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_complex_builtins.h
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_intrinsics.h
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_math_forward_declares.h
+%exclude /usr/lib64/clang/5.0.1/include/__clang_cuda_runtime_wrapper.h
+%exclude /usr/lib64/clang/5.0.1/include/__stddef_max_align_t.h
+%exclude /usr/lib64/clang/5.0.1/include/__wmmintrin_aes.h
+%exclude /usr/lib64/clang/5.0.1/include/__wmmintrin_pclmul.h
+%exclude /usr/lib64/clang/5.0.1/include/adxintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/altivec.h
+%exclude /usr/lib64/clang/5.0.1/include/ammintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/arm_acle.h
+%exclude /usr/lib64/clang/5.0.1/include/arm_neon.h
+%exclude /usr/lib64/clang/5.0.1/include/armintr.h
+%exclude /usr/lib64/clang/5.0.1/include/avx2intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512bwintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512cdintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512dqintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512erintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512fintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512ifmaintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512ifmavlintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512pfintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vbmiintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vbmivlintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vlbwintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vlcdintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vldqintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vlintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avx512vpopcntdqintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/avxintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/bmi2intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/bmiintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/clflushoptintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/clzerointrin.h
+%exclude /usr/lib64/clang/5.0.1/include/cpuid.h
+%exclude /usr/lib64/clang/5.0.1/include/emmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/f16cintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/float.h
+%exclude /usr/lib64/clang/5.0.1/include/fma4intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/fmaintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/fxsrintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/htmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/htmxlintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/ia32intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/immintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/inttypes.h
+%exclude /usr/lib64/clang/5.0.1/include/iso646.h
+%exclude /usr/lib64/clang/5.0.1/include/limits.h
+%exclude /usr/lib64/clang/5.0.1/include/lwpintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/lzcntintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/mm3dnow.h
+%exclude /usr/lib64/clang/5.0.1/include/mm_malloc.h
+%exclude /usr/lib64/clang/5.0.1/include/mmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/msa.h
+%exclude /usr/lib64/clang/5.0.1/include/mwaitxintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/nmmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/opencl-c.h
+%exclude /usr/lib64/clang/5.0.1/include/pkuintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/pmmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/popcntintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/prfchwintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/rdseedintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/rtmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/s390intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/shaintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/smmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/stdalign.h
+%exclude /usr/lib64/clang/5.0.1/include/stdarg.h
+%exclude /usr/lib64/clang/5.0.1/include/stdatomic.h
+%exclude /usr/lib64/clang/5.0.1/include/stdbool.h
+%exclude /usr/lib64/clang/5.0.1/include/stddef.h
+%exclude /usr/lib64/clang/5.0.1/include/stdint.h
+%exclude /usr/lib64/clang/5.0.1/include/stdnoreturn.h
+%exclude /usr/lib64/clang/5.0.1/include/tbmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/tgmath.h
+%exclude /usr/lib64/clang/5.0.1/include/tmmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/unwind.h
+%exclude /usr/lib64/clang/5.0.1/include/vadefs.h
+%exclude /usr/lib64/clang/5.0.1/include/varargs.h
+%exclude /usr/lib64/clang/5.0.1/include/vecintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/wmmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/x86intrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xmmintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xopintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xsavecintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xsaveintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xsaveoptintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xsavesintrin.h
+%exclude /usr/lib64/clang/5.0.1/include/xtestintrin.h
+%exclude /usr/lib64/cmake/clang/ClangConfig.cmake
+%exclude /usr/lib64/cmake/clang/ClangTargets-relwithdebinfo.cmake
+%exclude /usr/lib64/cmake/clang/ClangTargets.cmake
 %exclude /usr/lib64/cmake/llvm/AddLLVM.cmake
 %exclude /usr/lib64/cmake/llvm/AddLLVMDefinitions.cmake
 %exclude /usr/lib64/cmake/llvm/AddOCaml.cmake
@@ -1388,6 +2035,36 @@ popd
 %exclude /usr/lib64/libLLVMXRay.so
 %exclude /usr/lib64/libLLVMipo.so
 %exclude /usr/lib64/libLTO.so
+%exclude /usr/lib64/libclang.so
+%exclude /usr/lib64/libclangARCMigrate.so
+%exclude /usr/lib64/libclangAST.so
+%exclude /usr/lib64/libclangASTMatchers.so
+%exclude /usr/lib64/libclangAnalysis.so
+%exclude /usr/lib64/libclangBasic.so
+%exclude /usr/lib64/libclangCodeGen.so
+%exclude /usr/lib64/libclangDriver.so
+%exclude /usr/lib64/libclangDynamicASTMatchers.so
+%exclude /usr/lib64/libclangEdit.so
+%exclude /usr/lib64/libclangFormat.so
+%exclude /usr/lib64/libclangFrontend.so
+%exclude /usr/lib64/libclangFrontendTool.so
+%exclude /usr/lib64/libclangIndex.so
+%exclude /usr/lib64/libclangLex.so
+%exclude /usr/lib64/libclangParse.so
+%exclude /usr/lib64/libclangRewrite.so
+%exclude /usr/lib64/libclangRewriteFrontend.so
+%exclude /usr/lib64/libclangSema.so
+%exclude /usr/lib64/libclangSerialization.so
+%exclude /usr/lib64/libclangStaticAnalyzerCheckers.so
+%exclude /usr/lib64/libclangStaticAnalyzerCore.so
+%exclude /usr/lib64/libclangStaticAnalyzerFrontend.so
+%exclude /usr/lib64/libclangTooling.so
+%exclude /usr/lib64/libclangToolingCore.so
+%exclude /usr/lib64/libclangToolingRefactor.so
+
+%files doc
+%defattr(-,root,root,-)
+%exclude /usr/share/man/man1/scan-build.1
 
 %files lib
 %defattr(-,root,root,-)
@@ -1537,3 +2214,55 @@ popd
 /usr/lib64/libLLVMipo.so.5.0.1
 /usr/lib64/libLTO.so.5
 /usr/lib64/libLTO.so.5.0.1
+/usr/lib64/libclang.so.5
+/usr/lib64/libclang.so.5.0
+/usr/lib64/libclangARCMigrate.so.5
+/usr/lib64/libclangARCMigrate.so.5.0.1
+/usr/lib64/libclangAST.so.5
+/usr/lib64/libclangAST.so.5.0.1
+/usr/lib64/libclangASTMatchers.so.5
+/usr/lib64/libclangASTMatchers.so.5.0.1
+/usr/lib64/libclangAnalysis.so.5
+/usr/lib64/libclangAnalysis.so.5.0.1
+/usr/lib64/libclangBasic.so.5
+/usr/lib64/libclangBasic.so.5.0.1
+/usr/lib64/libclangCodeGen.so.5
+/usr/lib64/libclangCodeGen.so.5.0.1
+/usr/lib64/libclangDriver.so.5
+/usr/lib64/libclangDriver.so.5.0.1
+/usr/lib64/libclangDynamicASTMatchers.so.5
+/usr/lib64/libclangDynamicASTMatchers.so.5.0.1
+/usr/lib64/libclangEdit.so.5
+/usr/lib64/libclangEdit.so.5.0.1
+/usr/lib64/libclangFormat.so.5
+/usr/lib64/libclangFormat.so.5.0.1
+/usr/lib64/libclangFrontend.so.5
+/usr/lib64/libclangFrontend.so.5.0.1
+/usr/lib64/libclangFrontendTool.so.5
+/usr/lib64/libclangFrontendTool.so.5.0.1
+/usr/lib64/libclangIndex.so.5
+/usr/lib64/libclangIndex.so.5.0.1
+/usr/lib64/libclangLex.so.5
+/usr/lib64/libclangLex.so.5.0.1
+/usr/lib64/libclangParse.so.5
+/usr/lib64/libclangParse.so.5.0.1
+/usr/lib64/libclangRewrite.so.5
+/usr/lib64/libclangRewrite.so.5.0.1
+/usr/lib64/libclangRewriteFrontend.so.5
+/usr/lib64/libclangRewriteFrontend.so.5.0.1
+/usr/lib64/libclangSema.so.5
+/usr/lib64/libclangSema.so.5.0.1
+/usr/lib64/libclangSerialization.so.5
+/usr/lib64/libclangSerialization.so.5.0.1
+/usr/lib64/libclangStaticAnalyzerCheckers.so.5
+/usr/lib64/libclangStaticAnalyzerCheckers.so.5.0.1
+/usr/lib64/libclangStaticAnalyzerCore.so.5
+/usr/lib64/libclangStaticAnalyzerCore.so.5.0.1
+/usr/lib64/libclangStaticAnalyzerFrontend.so.5
+/usr/lib64/libclangStaticAnalyzerFrontend.so.5.0.1
+/usr/lib64/libclangTooling.so.5
+/usr/lib64/libclangTooling.so.5.0.1
+/usr/lib64/libclangToolingCore.so.5
+/usr/lib64/libclangToolingCore.so.5.0.1
+/usr/lib64/libclangToolingRefactor.so.5
+/usr/lib64/libclangToolingRefactor.so.5.0.1
