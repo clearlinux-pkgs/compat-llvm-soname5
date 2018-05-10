@@ -6,7 +6,7 @@
 #
 Name     : compat-llvm-soname5
 Version  : 5.0.1
-Release  : 5
+Release  : 6
 URL      : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
 Source0  : http://releases.llvm.org/5.0.1/llvm-5.0.1.src.tar.xz
 Source1  : http://releases.llvm.org/5.0.1/cfe-5.0.1.src.tar.xz
